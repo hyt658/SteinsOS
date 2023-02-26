@@ -1,4 +1,5 @@
 sysroot/
+SteinsOS.kernel
 *.a
 *.o
 *.d
