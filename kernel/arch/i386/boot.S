@@ -91,7 +91,7 @@ _start:
 	aligned above and we have pushed a multiple of 16 bytes to the
 	stack since (pushed 0 bytes so far), so the alignment has thus been
 	preserved and the call is well defined.
-	 /
+	*/
 	call kmain
  
 	/* 
