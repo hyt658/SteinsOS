@@ -1,6 +1,8 @@
 #include <string.h>
 
-void* memmove(void* dest, const void* src, size_t n) {
+void* 
+memmove(void* dest, const void* src, size_t n) 
+{
     unsigned char* buf_dest = (unsigned char*)dest;
     const unsigned char* buf_src = (const unsigned char*)src;
     if (buf_dest < buf_src) {

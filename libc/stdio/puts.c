@@ -1,5 +1,7 @@
 #include <stdio.h>
 
-int puts(const char* str) {
+int 
+puts(const char* str) 
+{
     return printf(str);
 }
