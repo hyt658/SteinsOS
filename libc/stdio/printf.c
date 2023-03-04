@@ -2,27 +2,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <math.h>
-
-/*
-Function name: print
-Description: print out a string
-Parameters:
-    @output: output string
-    @length: length of the output string
-Return:
-    0 means print properly
-    1 means there is error during print
-*/
-static int 
-print(const char* output, size_t length) 
-{
-    for (size_t i=0; i<length; ++i) {
-        if (putchar(output[i]) == EOF) {
-            return 1;
-        }
-    }
-    return 0;
-}
+#include <kernel/tty.h>
 
 /*
 Function name: print_number
@@ -32,20 +12,15 @@ Parameters:
     @digit: number of digits of this number
 Return: void
 */
-static int 
+static void 
 print_number(int num, unsigned int digit) 
 {
-    if (digit == 0) { return 0; }
+    if (digit == 0) { return; }
 
     unsigned int base = (unsigned int)pow(10, digit-1);
     char output = num/base + '0';
-    int error = print(&output, 1);
-    
-    if (error) { 
-        return 1; 
-    } else {
-        return print_number(num%base, digit-1);
-    } 
+    putchar(output);
+    print_number(num%base, digit-1);
 }
 
 
@@ -56,21 +31,21 @@ printf(const char* format, ...)
     va_start(valist, format);
     size_t len = 0;
     int written = 0;
-    int error = 0;
 
     while (format[0] != '\0') {
         if (format[0] == '%') {
             if (format[1] == '%') {     /* %% prints out % */
-                len = sizeof(format[1]);
-                error = print(format+1, len);
+                char ch = format[1];
+                len = 1;
+                putchar(ch);
             } else if (format[1] == 'c') {      /* %c for char */
-                const char ch = (const char)va_arg(valist, int);
+                char ch = (char)va_arg(valist, int);
                 len = sizeof(ch); 
-                error = print(&ch, len);     
+                putchar(ch);     
             } else if (format[1] == 's') {      /* %s for string */
                 const char* content = (const char*)va_arg(valist, int);
                 len = strlen(content);
-                error = print(content, len);
+                terminal_output_string(content);
             } else if (format[1] == 'd') {      /* %d for int */
                 int num = va_arg(valist, int);
                 int temp = num;
@@ -79,22 +54,18 @@ printf(const char* format, ...)
                     temp /= 10;
                     len += 1; 
                 }
-                if (num < 0) { print("-", 1); }
-                error = print_number(num, len);
+                if (num < 0) { putchar('-'); }
+                print_number(num, len);
             }
             // TODO: finish all printf format
             format += 2;
         } else {
-            len = sizeof(format[0]);
-            print(format, len);
+            char ch = format[0];
+            len = 1;
+            putchar(ch);
             format += 1;
         }
         written += len;
-
-        if (error) {
-            // TODO: printf error
-            break;
-        }
     }
     
     return len;

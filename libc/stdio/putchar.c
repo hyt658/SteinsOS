@@ -3,6 +3,6 @@
 
 int putchar(int ch) {
     char output = (char)ch;
-    terminal_output_char(output);
+    terminal_output_char(output, 0);
     return ch;
 }
