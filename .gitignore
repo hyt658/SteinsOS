@@ -1,3 +1,4 @@
+.vscode/
 sysroot/
 SteinsOS.kernel
 *.a
