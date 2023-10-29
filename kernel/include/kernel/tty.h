@@ -3,51 +3,46 @@
 
 #include "vga.h"
 
-/*
-Function name: terminal_initialize
-Description: initialize the terminal for output
-Parameters: void
-Return: void
-*/
+/**
+ * @brief initialize the terminal for output
+ * 
+ * @return void
+ */
 void terminal_initialize(void);
 
-/*
-Function name: terminal_clear
-Description: clear the entire terminal
-Parameters: void
-Return: void
-*/
+/**
+ * @brief clear the entire terminal
+ * 
+ * @return void
+ */
 void terminal_clear(void);
 
-/*
-Function name: terminal_change_color
-Description: change the terminal color for future output
-Parameters:
-    @fg: foreground color
-    @bg: background color
-Return: void
-*/
+/**
+ * @brief change the terminal color for future output
+ * 
+ * @param[in] fg: the foreground color wanted to change
+ * @param[in] bg: the background color wanted to change
+ * 
+ * @return void
+ */
 void terminal_change_color(enum vga_color fg, enum vga_color bg);
 
-/*
-Function name: terminal_output_char
-Description: print a single char on the terminal
-Parameters:
-    @ch: the output char
-    @is_str: 
-        0 indicates currently only print a single char
-        1 indicates currently is printing a string
-Return: void
-*/
-void terminal_output_char(char ch, int is_str);
+/**
+ * @brief print a single char on the terminal
+ * 
+ * @param[in] ch: char wanted to print
+ * 
+ * @return void
+ */
+void terminal_print_char(char ch);
 
-/*
-Funtion name: terminal_output_string
-Description: print a string on the terminal
-Parameters:
-    @data: the output string
-Return: void
-*/
-void terminal_output_string(const char* data) ;
+/**
+ * @brief print a string on the terminal
+ * 
+ * @param[in] str: the string wanted to print
+ * 
+ * @return void
+ */
+void terminal_print_string(const char* str);
 
 #endif

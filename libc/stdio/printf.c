@@ -4,13 +4,13 @@
 #include <math.h>
 #include <kernel/tty.h>
 
-/*
-Function name: print_number
-Description: print out an integer number
-Parameters:
-    @num: the output integer number
-    @digit: number of digits of this number
-Return: void
+/**
+ * @brief print out an integer number
+ * 
+ * @param[in] num: integer number wants to print
+ * @param[in] digit: number of digits of num
+ * 
+ * @return void
 */
 static void 
 print_number(int num, unsigned int digit) 
@@ -45,7 +45,7 @@ printf(const char* format, ...)
             } else if (format[1] == 's') {      /* %s for string */
                 const char* content = (const char*)va_arg(valist, int);
                 len = strlen(content);
-                terminal_output_string(content);
+                terminal_print_string(content);
             } else if (format[1] == 'd') {      /* %d for int */
                 int num = va_arg(valist, int);
                 int temp = num;
@@ -67,6 +67,7 @@ printf(const char* format, ...)
         }
         written += len;
     }
+    va_end(valist);
     
     return len;
 }

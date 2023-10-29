@@ -17,18 +17,17 @@ const uint8_t VGA_CURSOR_END_REGISTER = 0x0B;
 const uint8_t VGA_CURSOR_POS_HIGH_REGISTER = 0x0E;
 const uint8_t VGA_CURSOR_POS_LOW_REGISTER = 0x0F;
 
-static size_t terminal_row;
-static size_t terminal_column;
-static uint8_t terminal_color;
-static uint16_t* terminal_buffer;
+static size_t terminal_row;         /* row of next output */
+static size_t terminal_column;      /* column of next output */
+static uint8_t terminal_color;      /* color of current terminal */
+static uint16_t* terminal_buffer;   /* address of output buffer */
 
-/*
-Function name: enable_cursor
-Description: 
-    enable the cursor on VGA text mode. By default the cursor will occupy the entire
-    char block (fill in from scanline 0 to 16)
-Parameters: void
-Return: void
+/**
+ * @brief enable the cursor on VGA text mode. 
+ * 
+ * @note The cursor will occupy the entire char block (fill in from scanline 0 to 16)
+ * 
+ * @return void
 */
 static void 
 enable_cursor(void)
@@ -49,20 +48,24 @@ enable_cursor(void)
     outb(VGA_REGISTER_ACCESS_PORT, (result & scanline_end_rest_mask) | scanline_end);
 }
 
-/*
-Function name: disable_cursor
-Description: disable the cursor on VGA text mode
-Parameters: void
-Return: void
+/**
+ * @brief disable the cursor on VGA text mode
+ * 
+ * @return void
 */
-// static void 
-// disable_cursor(void)
-// {
-//     uint8_t disable_value = 0x20;
-// 	outb(VGA_REGISTER_SELECT_PORT, VGA_CURSOR_START_REGISTER);
-// 	outb(VGA_REGISTER_ACCESS_PORT, disable_value);
-// }
+static void 
+disable_cursor(void)
+{
+    uint8_t disable_value = 0x20;
+	outb(VGA_REGISTER_SELECT_PORT, VGA_CURSOR_START_REGISTER);
+	outb(VGA_REGISTER_ACCESS_PORT, disable_value);
+}
 
+/**
+ * @brief update the cursor to next output position
+ * 
+ * @return void
+ */
 static void
 update_cursor_pos(void)
 {
@@ -78,33 +81,86 @@ update_cursor_pos(void)
     outb(VGA_REGISTER_ACCESS_PORT, (uint8_t)(idx & low_eight_bits_mask));
 }
 
+/**
+ * @brief move all current text up n rows
+ * 
+ * @param[in] n: rows to scroll up
+ * 
+ * @return void
+ */
 static void
-terminal_scroll_up(void) 
+terminal_scroll_up(int n) 
 {
-    // for each line, copy and store the content from next line
-    for (size_t y=0; y<VGA_HEIGHT; ++y) {
+    // for each line, cut the content from next n lines and paste to it
+    for (size_t y=0; y<(VGA_HEIGHT-n); ++y) { 
         for (size_t x=0; x<VGA_WIDTH; ++x) {
-            const size_t idx = y * VGA_WIDTH + x;
-            
-            terminal_buffer[idx] = terminal_buffer[idx + VGA_WIDTH];
+            const size_t dest = y * VGA_WIDTH + x;
+            const size_t src = dest + VGA_WIDTH * n;
+            terminal_buffer[dest] = terminal_buffer[src];
+            terminal_buffer[src] = vga_entry(' ', terminal_color);
+        }
+    }
+}
+
+/**
+ * @brief print a char on termernal
+ * 
+ * @param[in] ch: char wanted to print
+ * 
+ * @note has no effect on cursor
+ * 
+ * @return void
+ */
+void 
+terminal_output_char(char ch) 
+{
+    switch (ch) {
+        
+    case '\n':      /* newline */
+        terminal_column = 0;
+        terminal_row += 1;  
+        break;
+
+    case '\t':      /* tab */
+        int count = (terminal_column + 4) / 4;
+        terminal_column = count * 4;
+        if (terminal_column == VGA_WIDTH) {
+            terminal_column -= 4;
+        }
+        break;
+
+    case '\r':      /* carriage return */
+        terminal_column = 0;
+        break;
+        
+    default:        /* normal output char */
+        const size_t index = terminal_row * VGA_WIDTH + terminal_column;
+        terminal_buffer[index] = vga_entry(ch, terminal_color);
+        terminal_column += 1;
+
+        if (terminal_column == VGA_WIDTH) {
+            terminal_column = 0;
+            terminal_row += 1;
         }
     }
 
-    // clear the bottom line
-    for (size_t x=0; x<VGA_WIDTH; ++x) {
-        const size_t idx = (VGA_HEIGHT-1) * VGA_WIDTH + x;
-        terminal_buffer[idx] = vga_entry(' ', terminal_color);
+    if (terminal_row == VGA_HEIGHT) {
+        terminal_scroll_up(1);
+        terminal_row -= 1;
     }
 }
+
 
 void 
 terminal_initialize(void) 
 {
 	terminal_row = 0;
 	terminal_column = 0;
-	terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
 	terminal_buffer = VGA_MEMORY;
+    terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+
     terminal_clear();
+    disable_cursor();
     enable_cursor();
     update_cursor_pos();
 }
@@ -130,51 +186,18 @@ terminal_change_color(enum vga_color fg, enum vga_color bg)
 }
 
 void 
-terminal_output_char(char ch, int is_str) 
+terminal_print_char(char ch)
 {
-    switch (ch) {
-        
-    case '\n':      /* newline */
-        terminal_column = 0;
-        terminal_row += 1;  
-        break;
-
-    case '\t':      /* tab */
-        int count = (terminal_column + 4) / 4;
-        terminal_column = count * 4;
-        if (terminal_column == VGA_WIDTH) {
-            terminal_column -= 4;
-        }
-        break;
-
-    case '\r':      /* carriage return */
-        terminal_column = 0;
-        break;
-        
-    default:        /* normal output char */
-        const size_t index = terminal_row * VGA_WIDTH + terminal_column;
-        terminal_buffer[index] = vga_entry(ch, terminal_color);
-        if (++terminal_column == VGA_WIDTH) {
-            terminal_column = 0;
-            terminal_row += 1;
-        }
-    }
-
-    if (terminal_row == VGA_HEIGHT) {
-        terminal_scroll_up();
-        terminal_row -= 1;
-    }
-    
-    if (!is_str) { update_cursor_pos(); }
+    terminal_output_char(ch);
+    update_cursor_pos();
 }
- 
-void 
-terminal_output_string(const char* data) 
+
+void
+terminal_print_string(const char* str)
 {
-    size_t size = strlen(data);
-    int is_str = 1;
+    size_t size = strlen(str);
 	for (size_t i=0; i<size; ++i) {
-        terminal_output_char(data[i], is_str);
+        terminal_output_char(str[i]);
     }
     update_cursor_pos();
 }

@@ -23,36 +23,36 @@ enum vga_color {
 	VGA_COLOR_WHITE = 15,
 };
 
-/* 
-VGA text mode text buffer pattern (total 16 bits):
-    1. bit 0-7: ASCII code
-    2. bit 8-11: foreground color
-    3. bit 12-14: background color
-    4. bit 15: blink
-*/
+/** 
+ * VGA text mode text buffer pattern (total 16 bits):
+ *   1. bit 0-7: ASCII code to show
+ *   2. bit 8-11: foreground color
+ *   3. bit 12-14: background color
+ *   4. bit 15: blink
+ */
 
-/*
-Function name: vga_entry_color
-Description: calculate the color section for VGA text buffer
-Parameters:
-    @fg: foreground color
-    @bg: background color
-Return: uint8_t color section for VGA text buffer
-*/
+/**
+ * @brief calculate the color section for VGA text buffer
+ * 
+ * @param[in] fg: foreground color
+ * @param[in] bg: background color
+ * 
+ * @return color section of VGA text buffer
+ */
 static inline uint8_t 
 vga_entry_color(enum vga_color fg, enum vga_color bg) 
 {
 	return fg | (bg << 4);
 }
- 
-/*
- Function name: vga_entry
- Description: calculate the porper VGA text buffer and ready to write in
- Parameters:
-    @ch: the char that is wanted to output
-    @color: the foreground + background color of output
-Return: uint16_t VGA text buffer
-*/
+
+/**
+ * @brief calculate the porper VGA text buffer and ready to write in
+ * 
+ * @param[in] ch: char that wanted to print 
+ * @param[in] color: color of VGA
+ * 
+ * @return VGA text buffer
+ */
 static inline uint16_t 
 vga_entry(unsigned char ch, uint8_t color) 
 {
